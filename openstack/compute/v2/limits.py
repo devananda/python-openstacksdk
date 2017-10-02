@@ -12,6 +12,7 @@
 
 from openstack.compute import compute_service
 from openstack import resource2
+from openstack import utils
 
 
 class AbsoluteLimits(resource2.Resource):
@@ -75,8 +76,9 @@ class Limits(resource2.Resource):
 
     absolute = resource2.Body("absolute", type=AbsoluteLimits)
     rate = resource2.Body("rate", type=list)
+    project_id = resource2.URI("project_id")
 
-    def get(self, session, requires_id=False):
+    def get(self, session, requires_id=False, **attrs):
         """Get the Limits resource.
 
         :param session: The session to use for making this request.
@@ -86,8 +88,12 @@ class Limits(resource2.Resource):
         :rtype: :class:`~openstack.compute.v2.limits.Limits`
         """
         request = self._prepare_request(requires_id=False, prepend_key=False)
+        if self.project_id:
+            uri = "%s?tenant_id=%s" % (request.uri, self.project_id)
+        else:
+            uri = request.uri
 
-        response = session.get(request.uri, endpoint_filter=self.service)
+        response = session.get(uri, endpoint_filter=self.service)
 
         body = response.json()
         body = body[self.resource_key]
